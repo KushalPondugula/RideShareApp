@@ -3,4 +3,6 @@
     <string name="welcome">Welcome to Ride Share! \n Login or Sign Up to get started</string>
     <string name="login">Login</string>
     <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
 </resources>
