@@ -30,7 +30,7 @@ public class LoginFragment extends Fragment {
             public void onClick(View v) {
                 // Replace the SplashFragment with the QuizFragment
                 requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new SplashFragment())
+                        .replace(R.id.fragment_container, new HomeScreenFragment())
                         .commit();
             }
         });
