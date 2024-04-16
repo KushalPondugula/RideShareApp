@@ -28,8 +28,8 @@ public class HomeScreenFragment extends Fragment {
 
         // Find the start button
         Button logoutButton = view.findViewById(R.id.logoutHomeScreen);
-        Button driverButton = view.findViewById(R.id.driver);
-        Button riderButton = view.findViewById(R.id.rider);
+        Button driverButton = view.findViewById(R.id.give_ride_button);
+        Button riderButton = view.findViewById(R.id.get_ride_button);
 
         // Set OnClickListener to go to DriverFragment when driverButton is clicked
         driverButton.setOnClickListener((View.OnClickListener) v -> {
