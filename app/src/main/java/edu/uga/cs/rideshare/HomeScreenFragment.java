@@ -28,7 +28,24 @@ public class HomeScreenFragment extends Fragment {
 
         // Find the start button
         Button logoutButton = view.findViewById(R.id.logoutHomeScreen);
+        Button driverButton = view.findViewById(R.id.driver);
+        Button riderButton = view.findViewById(R.id.rider);
 
+        // Set OnClickListener to go to DriverFragment when driverButton is clicked
+        driverButton.setOnClickListener((View.OnClickListener) v -> {
+            // Replace the HomeScreenFragment with the DriverFragment
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new DriverFragment())
+                    .commit();
+        });
+
+        // Set OnClickListener to go to RiderFragment when riderButton is clicked
+        riderButton.setOnClickListener((View.OnClickListener) v -> {
+            // Replace the HomeScreenFragment with the RiderFragment
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new RiderFragment())
+                    .commit();
+        });
 
         // Set OnClickListener to logout back to splash screen when clicked
         logoutButton.setOnClickListener((View.OnClickListener) v -> {
