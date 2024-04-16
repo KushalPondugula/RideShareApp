@@ -30,7 +30,7 @@ public class SplashFragment extends Fragment {
             public void onClick(View v) {
                 // Replace the SplashFragment with the QuizFragment
                 requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new QuizContainerFragment(countryData))
+                        .replace(R.id.fragment_container, new LoginFragment())
                         .commit();
             }
         });
@@ -43,7 +43,7 @@ public class SplashFragment extends Fragment {
             public void onClick(View v) {
                 // Replace the SplashFragment with the QuizFragment
                 requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new PastQuizFragment(countryData))
+                        .replace(R.id.fragment_container, new SignUpFragment())
                         .commit();
             }
         });

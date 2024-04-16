@@ -21,16 +21,16 @@ public class SignUpFragment extends Fragment {
 
 
         // Find the start button
-        Button submitButton = view.findViewById(R.id.submit_button);
+        Button signUpButton = view.findViewById(R.id.signUp_button);
 
 
         // Set OnClickListener to start the quiz when the button is clicked
-        submitButton.setOnClickListener(new View.OnClickListener() {
+        signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Replace the SplashFragment with the QuizFragment
                 requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new QuizContainerFragment(countryData))
+                        .replace(R.id.fragment_container, new LoginFragment())
                         .commit();
             }
         });
