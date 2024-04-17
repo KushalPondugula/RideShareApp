@@ -37,7 +37,6 @@ public class SignUpFragment extends Fragment {
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser != null){
-            // Replace the SplashFragment with the QuizFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new LoginFragment())
                     .commit();
@@ -56,8 +55,18 @@ public class SignUpFragment extends Fragment {
 
         // Find the start button
         Button signUpButton = view.findViewById(R.id.signUp_button);
+        Button backButton = view.findViewById(R.id.backSignupButton);
         EditText editTextEmail = view.findViewById(R.id.signUpEmail);
         EditText editTextPassword = view.findViewById(R.id.signUpPassword);
+
+
+        // Set OnClickListener to go to RiderFragment when riderButton is clicked
+        backButton.setOnClickListener((View.OnClickListener) v -> {
+            // Replace the LoginFragment with the SplashFragment
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new SplashFragment())
+                    .commit();
+        });
 
         // Set OnClickListener to start the quiz when the button is clicked
         signUpButton.setOnClickListener(new View.OnClickListener() {
@@ -65,6 +74,13 @@ public class SignUpFragment extends Fragment {
             public void onClick(View v) {
                 String email = String.valueOf(editTextEmail.getText());
                 String password = String.valueOf(editTextPassword.getText());
+
+                if (email.isEmpty() || password.isEmpty()) {
+                    // If sign in fails, display a message to the user.
+                    Toast.makeText(getActivity(), "Enter a username or password",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -80,15 +96,19 @@ public class SignUpFragment extends Fragment {
                                     User newUser = new User(email, password);
                                     mDatabase.child("users").child(userId).setValue(newUser);
 
-                                    // Replace the SplashFragment with the QuizFragment
                                     requireActivity().getSupportFragmentManager().beginTransaction()
                                             .replace(R.id.fragment_container, new LoginFragment())
                                             .commit();
                                 }
-                                else {
+                                else if (password.length() < 6){
+                                    // If sign in fails, display a message to the user.
+                                    Log.d(TAG, "signInWithPassword:failure", task.getException());
+                                    Toast.makeText(getActivity(), "Password must be at least 6 characters",
+                                            Toast.LENGTH_SHORT).show();
+                                } else {
                                     // If sign in fails, display a message to the user.
                                     Log.d(TAG, "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(getActivity(), "Authentication failed.",
+                                    Toast.makeText(getActivity(), "Check proper email format, or duplicate email",
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -99,3 +119,4 @@ public class SignUpFragment extends Fragment {
         return view;
     }
 }
+

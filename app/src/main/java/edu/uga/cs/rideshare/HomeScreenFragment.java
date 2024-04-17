@@ -27,7 +27,6 @@ public class HomeScreenFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_screen_home, container, false);
 
-
         // Find the start button
         Button logoutButton = view.findViewById(R.id.logoutHomeScreen);
         Button driverButton = view.findViewById(R.id.give_ride_button);
@@ -191,9 +190,6 @@ public class HomeScreenFragment extends Fragment {
             oLayout.addView(updateButton);
             oLayout.addView(deleteButton);
         }
-
-
-
         return view;
     }
 

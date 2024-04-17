@@ -36,7 +36,6 @@ public class LoginFragment extends Fragment {
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
         if(currentUser != null){
-            // Replace the SplashFragment with the QuizFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new HomeScreenFragment())
                     .commit();
@@ -52,15 +51,34 @@ public class LoginFragment extends Fragment {
 
         // Find the start button
         Button loginButton = view.findViewById(R.id.loginButton);
+        Button backButton = view.findViewById(R.id.backButton);
+
         EditText editTextEmail = view.findViewById(R.id.loginEmail);
         EditText editTextPassword = view.findViewById(R.id.loginPassword);
         mAuth = FirebaseAuth.getInstance();
+
+        // Set OnClickListener to go to RiderFragment when riderButton is clicked
+        backButton.setOnClickListener((View.OnClickListener) v -> {
+            // Replace the LoginFragment with the SplashFragment
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new SplashFragment())
+                    .commit();
+        });
+
+
         // Set OnClickListener to start the quiz when the button is clicked
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String email = String.valueOf(editTextEmail.getText());
                 String password = String.valueOf(editTextPassword.getText());
+
+                if (email.isEmpty() || password.isEmpty()) {
+                    // If sign in fails, display a message to the user.
+                    Toast.makeText(getActivity(), "Enter a username or password",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 mAuth.signInWithEmailAndPassword( email, password )
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -78,7 +96,7 @@ public class LoginFragment extends Fragment {
                                 else {
                                     // If sign in fails, display a message to the user.
                                     Log.d( TAG, "signInWithEmail:failure", task.getException() );
-                                    Toast.makeText( getActivity(), "Authentication failed.",
+                                    Toast.makeText( getActivity(), "Wrong username or password",
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }
