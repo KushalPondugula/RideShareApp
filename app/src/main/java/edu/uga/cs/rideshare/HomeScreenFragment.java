@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,6 +52,7 @@ public class HomeScreenFragment extends Fragment {
         // Set OnClickListener to logout back to splash screen when clicked
         logoutButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the SplashFragment
+            FirebaseAuth.getInstance().signOut();
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new SplashFragment())
                     .commit();

@@ -29,6 +29,19 @@ public class SignUpFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser != null){
+            // Replace the SplashFragment with the QuizFragment
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new LoginFragment())
+                    .commit();
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -56,6 +69,10 @@ public class SignUpFragment extends Fragment {
                                 if (task.isSuccessful()) {
                                     // Sign in success, update UI with the signed-in user's information
                                     Log.d( TAG, "signInWithEmail:success" );
+                                    // Replace the SplashFragment with the QuizFragment
+                                    requireActivity().getSupportFragmentManager().beginTransaction()
+                                            .replace(R.id.fragment_container, new LoginFragment())
+                                            .commit();
                                     FirebaseUser user = mAuth.getCurrentUser();
                                 }
                                 else {
@@ -66,13 +83,6 @@ public class SignUpFragment extends Fragment {
                                 }
                             }
                         });
-
-
-
-                // Replace the SplashFragment with the QuizFragment
-                requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new LoginFragment())
-                        .commit();
             }
         });
 
