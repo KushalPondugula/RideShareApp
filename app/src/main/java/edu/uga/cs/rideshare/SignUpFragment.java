@@ -20,10 +20,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignUpFragment extends Fragment {
     FirebaseAuth mAuth;
+    DatabaseReference mDatabase;
+
     public SignUpFragment() {
         // Required empty public constructor
     }
@@ -47,13 +50,14 @@ public class SignUpFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_sign_up, container, false);
 
+        // Initialize Firebase Auth and Database
+        mAuth = FirebaseAuth.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
         // Find the start button
         Button signUpButton = view.findViewById(R.id.signUp_button);
         EditText editTextEmail = view.findViewById(R.id.signUpEmail);
         EditText editTextPassword = view.findViewById(R.id.signUpPassword);
-        mAuth = FirebaseAuth.getInstance();
-
 
         // Set OnClickListener to start the quiz when the button is clicked
         signUpButton.setOnClickListener(new View.OnClickListener() {
@@ -68,17 +72,23 @@ public class SignUpFragment extends Fragment {
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
                                     // Sign in success, update UI with the signed-in user's information
-                                    Log.d( TAG, "signInWithEmail:success" );
+                                    Log.d(TAG, "signInWithEmail:success");
+
+                                    // Store user data in Firebase Database
+                                    FirebaseUser user = mAuth.getCurrentUser();
+                                    String userId = user.getUid();
+                                    User newUser = new User(email, password);
+                                    mDatabase.child("users").child(userId).setValue(newUser);
+
                                     // Replace the SplashFragment with the QuizFragment
                                     requireActivity().getSupportFragmentManager().beginTransaction()
                                             .replace(R.id.fragment_container, new LoginFragment())
                                             .commit();
-                                    FirebaseUser user = mAuth.getCurrentUser();
                                 }
                                 else {
                                     // If sign in fails, display a message to the user.
-                                    Log.d( TAG, "signInWithEmail:failure", task.getException() );
-                                    Toast.makeText( getActivity(), "Authentication failed.",
+                                    Log.d(TAG, "signInWithEmail:failure", task.getException());
+                                    Toast.makeText(getActivity(), "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -86,12 +96,6 @@ public class SignUpFragment extends Fragment {
             }
         });
 
-
-
         return view;
     }
-
 }
-
-
-
