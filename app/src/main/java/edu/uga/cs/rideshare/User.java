@@ -5,6 +5,10 @@ public class User {
     public String pass;
     public int points;
 
+    public User() {
+
+    }
+
     public User(String email, String pass) {
         this.email = email;
         this.pass = pass;

@@ -8,9 +8,15 @@ import android.widget.Button;
 
 import androidx.fragment.app.Fragment;
 
+import java.util.List;
+
 public class DriverFragment extends Fragment {
-    public DriverFragment() {
+    private User currentUser;
+    private List<User> userList;
+    public DriverFragment(User currentUser, List<User> userList) {
         // Required empty public constructor
+        this.currentUser = currentUser;
+        this.userList = userList;
     }
 
     @Override
@@ -27,7 +33,7 @@ public class DriverFragment extends Fragment {
         homeButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the DriverFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeScreenFragment())
+                    .replace(R.id.fragment_container, new HomeScreenFragment(currentUser, userList))
                     .commit();
         });
 

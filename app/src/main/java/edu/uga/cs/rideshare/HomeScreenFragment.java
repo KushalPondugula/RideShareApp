@@ -17,8 +17,13 @@ import java.util.Date;
 import java.util.List;
 
 public class HomeScreenFragment extends Fragment {
-    public HomeScreenFragment() {
+
+    private User currentUser;
+    private List<User> userList;
+    public HomeScreenFragment(User currentUser, List<User> userList) {
         // Required empty public constructor
+        this.currentUser = currentUser;
+        this.userList = userList;
     }
 
     @Override
@@ -26,6 +31,9 @@ public class HomeScreenFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_screen_home, container, false);
+
+        TextView points = view.findViewById(R.id.points);
+        points.setText(String.valueOf(currentUser.points));
 
         // Find the start button
         Button logoutButton = view.findViewById(R.id.logoutHomeScreen);
@@ -36,7 +44,7 @@ public class HomeScreenFragment extends Fragment {
         driverButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the DriverFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new DriverFragment())
+                    .replace(R.id.fragment_container, new DriverFragment(currentUser, userList))
                     .commit();
         });
 
@@ -44,7 +52,7 @@ public class HomeScreenFragment extends Fragment {
         riderButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the RiderFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new RiderFragment())
+                    .replace(R.id.fragment_container, new RiderFragment(currentUser, userList))
                     .commit();
         });
 
@@ -57,7 +65,7 @@ public class HomeScreenFragment extends Fragment {
                     .commit();
         });
 
-        User currentUser = new User("current@gmail.com", "pass");
+
         List<Ride> aList = new ArrayList<>();
         aList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
         aList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
