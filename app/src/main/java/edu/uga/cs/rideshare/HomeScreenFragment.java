@@ -108,7 +108,7 @@ public class HomeScreenFragment extends Fragment {
         rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
 
 
-        LinearLayout rLayout = view.findViewById(R.id.r_rides_layout);
+        LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
         for (int i = rList.size() - 1; i >= 0; i--) {
             Ride ride = rList.get(i);
 
