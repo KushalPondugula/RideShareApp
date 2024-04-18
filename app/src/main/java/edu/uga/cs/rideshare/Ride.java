@@ -13,6 +13,10 @@ public class Ride {
     public boolean rideCompletedDriver;
     public boolean rideCompletedRider;
 
+    public Ride(){
+
+    }
+
     public Ride (Date date, String goingTo, String from, User driver, User rider) {
         this.date = date;
         this.goingTo = goingTo;

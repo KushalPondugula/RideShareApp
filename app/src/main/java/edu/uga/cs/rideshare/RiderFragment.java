@@ -17,10 +17,12 @@ import java.util.List;
 public class RiderFragment extends Fragment {
     private User currentUser;
     private List<User> userList;
-    public RiderFragment(User currentUser, List<User> userList) {
+    private List<Ride> rideList;
+    public RiderFragment(User currentUser, List<User> userList, List<Ride> rideList) {
         // Required empty public constructor
         this.currentUser = currentUser;
         this.userList = userList;
+        this.rideList = rideList;
     }
 
     @Override
@@ -37,7 +39,7 @@ public class RiderFragment extends Fragment {
         homeButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the DriverFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeScreenFragment(currentUser, userList))
+                    .replace(R.id.fragment_container, new HomeScreenFragment(currentUser, userList, rideList))
                     .commit();
         });
 

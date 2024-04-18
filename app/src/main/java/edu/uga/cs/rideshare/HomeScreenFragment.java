@@ -1,6 +1,7 @@
 package edu.uga.cs.rideshare;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,10 +21,13 @@ public class HomeScreenFragment extends Fragment {
 
     private User currentUser;
     private List<User> userList;
-    public HomeScreenFragment(User currentUser, List<User> userList) {
+
+    private List<Ride> rideList;
+    public HomeScreenFragment(User currentUser, List<User> userList, List<Ride> rideList) {
         // Required empty public constructor
         this.currentUser = currentUser;
         this.userList = userList;
+        this.rideList = rideList;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class HomeScreenFragment extends Fragment {
         driverButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the DriverFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new DriverFragment(currentUser, userList))
+                    .replace(R.id.fragment_container, new DriverFragment(currentUser, userList, rideList))
                     .commit();
         });
 
@@ -52,7 +56,7 @@ public class HomeScreenFragment extends Fragment {
         riderButton.setOnClickListener((View.OnClickListener) v -> {
             // Replace the HomeScreenFragment with the RiderFragment
             requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new RiderFragment(currentUser, userList))
+                    .replace(R.id.fragment_container, new RiderFragment(currentUser, userList, rideList))
                     .commit();
         });
 
@@ -65,11 +69,8 @@ public class HomeScreenFragment extends Fragment {
                     .commit();
         });
 
-
-        List<Ride> aList = new ArrayList<>();
-        aList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        aList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        aList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
+        Log.d("rideList, HS:", String.valueOf(rideList));
+        List<Ride> aList = filterAcceptedRides(rideList);
 
 
         LinearLayout aLayout = view.findViewById(R.id.a_rides_layout);
@@ -102,10 +103,8 @@ public class HomeScreenFragment extends Fragment {
         }
 
 
-        List<Ride> rList = new ArrayList<>();
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
+        List<Ride> rList = filterRidesForCurrentUser(rideList, currentUser);
+
 
 
         LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
@@ -200,6 +199,28 @@ public class HomeScreenFragment extends Fragment {
         }
         return view;
     }
+
+    private List<Ride> filterAcceptedRides(List<Ride> rideList) {
+        List<Ride> filteredList = new ArrayList<>();
+        for (Ride ride : rideList) {
+            if (ride.driverAccepted && ride.riderAccepted && (ride.driver.equals(currentUser) || ride.rider.equals(currentUser))) {
+                filteredList.add(ride);
+            }
+        }
+        return filteredList;
+    }
+
+    private List<Ride> filterRidesForCurrentUser(List<Ride> rideList, User currentUser) {
+        List<Ride> filteredRides = new ArrayList<>();
+        for (Ride ride : rideList) {
+            if (ride.rider == null && ride.driver != null && ride.driver.equals(currentUser)) {
+                // Add the ride to filteredRides if it has no rider and the driver is the current user
+                filteredRides.add(ride);
+            }
+        }
+        return filteredRides;
+    }
+
 
 }
 

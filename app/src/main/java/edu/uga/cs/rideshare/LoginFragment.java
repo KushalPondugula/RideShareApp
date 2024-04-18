@@ -2,6 +2,7 @@ package edu.uga.cs.rideshare;
 
 import static android.content.ContentValues.TAG;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,6 +27,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class LoginFragment extends Fragment {
@@ -35,6 +37,10 @@ public class LoginFragment extends Fragment {
 
     private User currentUser;
     private List<User> userList;
+
+    private List<Ride> rideList;
+
+    private AlertDialog alertDialog;
 
     public LoginFragment() {
         // Required empty public constructor
@@ -104,12 +110,13 @@ public class LoginFragment extends Fragment {
     }
 
     private void retrieveCurrentUser(String userId) {
+        retrieveRides();
         mDatabase.child("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 currentUser = dataSnapshot.getValue(User.class);
                 if (currentUser != null && userList != null) {
-                    navigateToHomeScreen(currentUser, userList);
+                    navigateToHomeScreenIfReady(currentUser, userList, rideList);
                 }
             }
 
@@ -128,7 +135,7 @@ public class LoginFragment extends Fragment {
                     userList.add(user);
                 }
                 if (currentUser != null && userList != null) {
-                    navigateToHomeScreen(currentUser, userList);
+                    navigateToHomeScreenIfReady(currentUser, userList, rideList);
                 }
             }
 
@@ -139,10 +146,49 @@ public class LoginFragment extends Fragment {
         });
     }
 
-    private void navigateToHomeScreen(User currentUser, List<User> userList) {
-        HomeScreenFragment homeScreenFragment = new HomeScreenFragment(currentUser, userList);
+
+
+    // Method to retrieve rides from Firebase
+    private void retrieveRides() {
+        mDatabase.child("rides").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                rideList = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Ride ride = snapshot.getValue(Ride.class);
+                    rideList.add(ride);
+                }
+                // Pass the list of rides to the HomeScreenFragment
+                Log.d("rideList, login:", String.valueOf(rideList));
+                navigateToHomeScreenIfReady(currentUser, userList, rideList);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle error
+            }
+        });
+    }
+
+    private boolean isDataReady() {
+        return currentUser != null && userList != null && rideList != null;
+    }
+
+    private void navigateToHomeScreenIfReady(User currentUser, List<User> userList, List<Ride> rideList) {
+        if (isDataReady()) {
+            navigateToHomeScreen(currentUser, userList, rideList);
+        }
+    }
+
+
+    private void navigateToHomeScreen(User currentUser, List<User> userList, List<Ride> rideList) {
+        HomeScreenFragment homeScreenFragment = new HomeScreenFragment(currentUser, userList, rideList);
         requireActivity().getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, homeScreenFragment)
                 .commit();
     }
+
+
+
 }
