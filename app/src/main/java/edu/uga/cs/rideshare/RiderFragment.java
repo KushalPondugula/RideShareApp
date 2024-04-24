@@ -1,5 +1,7 @@
 package edu.uga.cs.rideshare;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
@@ -17,6 +20,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +30,7 @@ public class RiderFragment extends Fragment {
     private List<User> userList;
     private DatabaseReference mDatabase;
     private List<Ride> rideList;
+    private String dateTimeString;
     public RiderFragment(User currentUser, List<User> userList, List<Ride> rideList) {
         // Required empty public constructor
         this.currentUser = currentUser;
@@ -42,7 +47,7 @@ public class RiderFragment extends Fragment {
         mDatabase = FirebaseDatabase.getInstance().getReference();
         // Find the start button
         Button homeButton = view.findViewById(R.id.home_button);
-
+        Button dateButton = view.findViewById(R.id.date_time_button);
         Button postRequestButton = view.findViewById(R.id.post_button);
 
         // Set OnClickListener to go to DriverFragment when driverButton is clicked
@@ -55,9 +60,9 @@ public class RiderFragment extends Fragment {
 
 
         List<Ride> rList = new ArrayList<>();
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        rList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
+        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
+        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
+        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
 
 
         LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
@@ -102,38 +107,59 @@ public class RiderFragment extends Fragment {
             rLayout.addView(deleteButton);
         }
 
-        EditText dateInput = view.findViewById(R.id.editTextDate);
+        // Date and Time Selection
+        dateButton.setOnClickListener((View.OnClickListener) v -> {
+            // Get current date
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            // Create date picker dialog
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view1, year1, monthOfYear, dayOfMonth) -> {
+                // Get selected date
+                Calendar timeCalendar = Calendar.getInstance();
+                int hour = timeCalendar.get(Calendar.HOUR_OF_DAY);
+                int minute = timeCalendar.get(Calendar.MINUTE);
+
+                // Create time picker dialog
+                TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(), (view2, hourOfDay, minute1) -> {
+                    // Handle selected date and time
+                    Calendar selectedDateTime = Calendar.getInstance();
+                    selectedDateTime.set(year1, monthOfYear, dayOfMonth, hourOfDay, minute1);
+
+                    // Format the selected date and time
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.US);
+                    dateTimeString = dateFormat.format(selectedDateTime.getTime());
+
+                    // Display the selected date and time
+                    Toast.makeText(getContext(), "Selected Date and Time: " + dateTimeString, Toast.LENGTH_LONG).show();
+                }, hour, minute, false);
+
+                // Show time picker dialog
+                timePickerDialog.show();
+            }, year, month, day);
+
+            // Show date picker dialog
+            datePickerDialog.show();
+        });
+
         EditText startLocationInput = view.findViewById(R.id.from_text);
         EditText destinationInput = view.findViewById(R.id.to_text);
 
+        // Post ride request
         postRequestButton.setOnClickListener((View.OnClickListener) v -> {
-            String destination = destinationInput.getText().toString();
-            String dateString = dateInput.getText().toString();
-            Date date = null; // Declare date variable outside try block
-            try {
-                // Parse the string into a Date object
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.US);
-                date = dateFormat.parse(dateString);
-                // Now 'date' contains the parsed date
-                // Use 'date' in your postRideRequest method or wherever you need it
-            } catch (ParseException e) {
-                e.printStackTrace();
-                // Handle the parsing error
-            }
             String startLocation = startLocationInput.getText().toString();
-            postRideRequest(date, startLocation, destination);
+            String destination = destinationInput.getText().toString(); // Set start location
+            postRideRequest(dateTimeString, startLocation, destination);
         });
 
         return view;
     }
 
-    private void postRideRequest(Date date, String startLocation, String destination) {
+    private void postRideRequest(String date, String startLocation, String destination) {
         String key = mDatabase.child("rides").push().getKey();
-        User rider = new User(currentUser.email, "email@example.com"); // Example user
-        Ride ride = new Ride(date, destination, startLocation, null, rider); // Example ride
+        Ride ride = new Ride(dateTimeString, destination, startLocation, null, currentUser);
         mDatabase.child("rides").child(key).setValue(ride);
     }
-
 }
-
-

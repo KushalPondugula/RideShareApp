@@ -160,9 +160,9 @@ public class HomeScreenFragment extends Fragment {
 
 
         List<Ride> oList = new ArrayList<>();
-        oList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        oList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
-        oList.add(new Ride(new Date(), "Home", "not Home", currentUser, null));
+        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
+        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
+        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 
 
         LinearLayout oLayout = view.findViewById(R.id.o_rides_layout);
@@ -207,10 +207,11 @@ public class HomeScreenFragment extends Fragment {
             oLayout.addView(deleteButton);
         }
         retrieveRequestedRides(view);
+        retrieveOfferedRide(view);
         return view;
     }
 
-     private void retrieveRequestedRides(View view) {
+    private void retrieveRequestedRides(View view) {
 
         // Query the database for requested rides by the current user
         Query query = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
@@ -232,6 +233,40 @@ public class HomeScreenFragment extends Fragment {
 
                         // Add the TextView to the layout
                         requestedRidesLayout.addView(textView);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle onCancelled
+                Log.e("HomeScreenFragment", "Database query cancelled: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    private void retrieveOfferedRide(View view) {
+
+        // Query the database for requested rides by the current user
+        Query query = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Clear the existing layout
+                LinearLayout offeredRidesLayout = view.findViewById(R.id.o_rides_layout);
+                offeredRidesLayout.removeAllViews();
+
+                // Iterate through the retrieved rides and display them
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Ride ride = snapshot.getValue(Ride.class);
+                    if (ride != null && getContext() != null) {
+                        // Create a TextView to display ride information
+                        TextView textView = new TextView(getContext());
+                        textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
+                        textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
+
+                        // Add the TextView to the layout
+                        offeredRidesLayout.addView(textView);
                     }
                 }
             }

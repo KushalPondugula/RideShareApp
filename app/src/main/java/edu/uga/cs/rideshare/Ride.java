@@ -3,7 +3,7 @@ package edu.uga.cs.rideshare;
 import java.util.Date;
 
 public class Ride {
-    public Date date;
+    public String date;
     public String goingTo;
     public String from;
     public boolean driverAccepted;
@@ -17,7 +17,7 @@ public class Ride {
 
     }
 
-    public Ride (Date date, String goingTo, String from, User driver, User rider) {
+    public Ride (String date, String goingTo, String from, User driver, User rider) {
         this.date = date;
         this.goingTo = goingTo;
         this.from = from;
