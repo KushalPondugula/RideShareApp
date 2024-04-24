@@ -45,6 +45,7 @@ public class HomeScreenFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_screen_home, container, false);
         mDatabase = FirebaseDatabase.getInstance().getReference();
+        retrieveRides();
         TextView points = view.findViewById(R.id.points);
         points.setText(String.valueOf(currentUser.points));
 
@@ -346,6 +347,24 @@ public class HomeScreenFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 // Handle onCancelled
                 Log.e("HomeScreenFragment", "Database query cancelled: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    private void retrieveRides() {
+        mDatabase.child("rides").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                rideList = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Ride ride = snapshot.getValue(Ride.class);
+                    rideList.add(ride);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle error
             }
         });
     }

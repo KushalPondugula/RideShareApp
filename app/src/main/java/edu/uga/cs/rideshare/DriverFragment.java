@@ -61,6 +61,44 @@ public class DriverFragment extends Fragment {
                     .commit();
         });
 
+        LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
+
+        // Populate rList with rides that meet the criteria
+        List<Ride> rList = getAvailableRides();
+
+        // Display available rides
+        for (Ride ride : rList) {
+            // Create a TextView to display ride information
+            TextView textView = new TextView(getContext());
+            textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
+            textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
+
+            Button acceptButton = new Button(getContext());
+            acceptButton.setTextAppearance(getContext(), R.style.MyButtonStyle);
+            acceptButton.setText("Accept Ride");
+
+            acceptButton.setOnClickListener(v -> {
+                // Update ride when accept button is clicked
+                ride.driverAccepted = true;
+                ride.driver = currentUser;
+                // Update UI
+                rLayout.removeView(acceptButton);
+                rLayout.removeView(textView);
+
+
+                DatabaseReference rideRef = mDatabase.child("rides").child(ride.getKey());
+                rideRef.child("driverAccepted").setValue(true);
+                rideRef.child("driver").setValue(currentUser);
+
+                // Show toast message
+                Toast.makeText(getContext(), "Ride Accepted", Toast.LENGTH_SHORT).show();
+            });
+
+            // Add the TextView and Button to the layout
+            rLayout.addView(textView);
+            rLayout.addView(acceptButton);
+        }
+
         // Date and Time Selection
         dateButton.setOnClickListener((View.OnClickListener) v -> {
             // Get current date
@@ -113,17 +151,38 @@ public class DriverFragment extends Fragment {
 
     private void postRideRequest(String date, String startLocation, String destination) {
         String key = mDatabase.child("rides").push().getKey();
-        Log.d("key:, ", key);
+        Log.d("key:", key);
         Ride ride = new Ride(key, date, destination, startLocation, currentUser, null);
+        if (ride == null) {
+            Log.e("Ride object", "Ride object is null");
+            return;
+        }
+
+        DatabaseReference rideRef = mDatabase.child("rides").child(ride.getKey());
+        rideRef.child("date").setValue(date);
+        rideRef.child("destination").setValue(destination);
+        rideRef.child("startLocation").setValue(startLocation);
+        rideRef.child("rider").setValue(currentUser);
+        rideRef.child("riderAccepted").setValue(true);
         mDatabase.child("rides").child(key).setValue(ride)
                 .addOnSuccessListener(aVoid -> {
-                    // Ride posted successfully, show toast message
-                    Toast.makeText(getContext(), "Ride Posted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Ride Requested", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    // Ride posting failed, show error toast message
-                    Toast.makeText(getContext(), "Failed to post ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to accept ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
+
+    private List<Ride> getAvailableRides() {
+        List<Ride> availableRides = new ArrayList<>();
+        for (Ride ride : rideList) {
+            if (!ride.driverAccepted && ride.riderAccepted) {
+                availableRides.add(ride);
+            }
+        }
+        return availableRides;
+    }
+
 }
+

@@ -162,9 +162,10 @@ public class RiderFragment extends Fragment {
         rideRef.child("destination").setValue(destination);
         rideRef.child("startLocation").setValue(startLocation);
         rideRef.child("rider").setValue(currentUser);
-        rideRef.child("riderAccepted").setValue(true)
+        rideRef.child("riderAccepted").setValue(true);
+        mDatabase.child("rides").child(key).setValue(ride)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(getContext(), "Ride Accepted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Ride Requested", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Failed to accept ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
