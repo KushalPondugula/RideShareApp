@@ -1,5 +1,6 @@
 package edu.uga.cs.rideshare;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,9 +10,16 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,6 +27,7 @@ import java.util.List;
 
 public class HomeScreenFragment extends Fragment {
 
+    private DatabaseReference mDatabase;
     private User currentUser;
     private List<User> userList;
 
@@ -35,7 +44,7 @@ public class HomeScreenFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_screen_home, container, false);
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         TextView points = view.findViewById(R.id.points);
         points.setText(String.valueOf(currentUser.points));
 
@@ -197,8 +206,44 @@ public class HomeScreenFragment extends Fragment {
             oLayout.addView(updateButton);
             oLayout.addView(deleteButton);
         }
+        retrieveRequestedRides(view);
         return view;
     }
+
+     private void retrieveRequestedRides(View view) {
+
+        // Query the database for requested rides by the current user
+        Query query = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Clear the existing layout
+                LinearLayout requestedRidesLayout = view.findViewById(R.id.av_rides_layout);
+                requestedRidesLayout.removeAllViews();
+
+                // Iterate through the retrieved rides and display them
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Ride ride = snapshot.getValue(Ride.class);
+                    if (ride != null && getContext() != null) {
+                        // Create a TextView to display ride information
+                        TextView textView = new TextView(getContext());
+                        textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
+                        textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
+
+                        // Add the TextView to the layout
+                        requestedRidesLayout.addView(textView);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle onCancelled
+                Log.e("HomeScreenFragment", "Database query cancelled: " + databaseError.getMessage());
+            }
+        });
+    }
+
 
     private List<Ride> filterAcceptedRides(List<Ride> rideList) {
         List<Ride> filteredList = new ArrayList<>();
@@ -220,7 +265,4 @@ public class HomeScreenFragment extends Fragment {
         }
         return filteredRides;
     }
-
-
 }
-
