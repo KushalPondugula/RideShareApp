@@ -112,7 +112,16 @@ public class DriverFragment extends Fragment {
 
     private void postRideRequest(String date, String startLocation, String destination) {
         String key = mDatabase.child("rides").push().getKey();
-        Ride ride = new Ride(dateTimeString, destination, startLocation, currentUser, null);
-        mDatabase.child("rides").child(key).setValue(ride);
+        Ride ride = new Ride(date, destination, startLocation, currentUser, null);
+        mDatabase.child("rides").child(key).setValue(ride)
+                .addOnSuccessListener(aVoid -> {
+                    // Ride posted successfully, show toast message
+                    Toast.makeText(getContext(), "Ride Posted", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    // Ride posting failed, show error toast message
+                    Toast.makeText(getContext(), "Failed to post ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
+
 }
