@@ -160,9 +160,9 @@ public class HomeScreenFragment extends Fragment {
 
 
         List<Ride> oList = new ArrayList<>();
-        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
-        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
-        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
+//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
+//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
+//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 
 
         LinearLayout oLayout = view.findViewById(R.id.o_rides_layout);
@@ -214,8 +214,8 @@ public class HomeScreenFragment extends Fragment {
     private void retrieveRequestedRides(View view) {
 
         // Query the database for requested rides by the current user
-        Query query = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
-        query.addValueEventListener(new ValueEventListener() {
+        Query requestedRidesQuery  = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
+        requestedRidesQuery .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Clear the existing layout
@@ -230,9 +230,49 @@ public class HomeScreenFragment extends Fragment {
                         TextView textView = new TextView(getContext());
                         textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
                         textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
+                        // Create update and delete buttons
+                        Button updateButton = new Button(getContext());
+                        updateButton.setText("Update");
+                        Button deleteButton = new Button(getContext());
+                        deleteButton.setText("Delete");
 
-                        // Add the TextView to the layout
+                        // Set OnClickListener for update button
+                        updateButton.setOnClickListener(v -> {
+                            // Handle update button click
+                            // Replace the current fragment with the RiderFragment
+                            Fragment riderFragment = new RiderFragment(currentUser, userList, rideList); // Create a new instance of RiderFragment
+                            Bundle args = new Bundle();
+                            //  args.putString("rideId", ride.key);
+                            riderFragment.setArguments(args);
+
+                            // Replace the current fragment with the RiderFragment
+                            requireActivity().getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragment_container, riderFragment)
+                                    .addToBackStack(null)  // Optional: Add fragment transaction to back stack
+                                    .commit();
+                        });
+
+                        // Set OnClickListener for delete button
+                        deleteButton.setOnClickListener(v -> {
+                            // Remove the ride from the database
+                            snapshot.getRef().removeValue()
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Ride deleted successfully, remove the ride views from the layout
+                                        requestedRidesLayout.removeView(textView);
+                                        requestedRidesLayout.removeView(updateButton);
+                                        requestedRidesLayout.removeView(deleteButton);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        // Handle failed deletion
+                                        Log.e("HomeScreenFragment", "Failed to delete ride: " + e.getMessage());
+                                    });
+                        });
+
+                        // Add the TextView, update button, and delete button to the layout
                         requestedRidesLayout.addView(textView);
+                        requestedRidesLayout.addView(updateButton);
+                        requestedRidesLayout.addView(deleteButton);
+
                     }
                 }
             }
@@ -248,8 +288,8 @@ public class HomeScreenFragment extends Fragment {
     private void retrieveOfferedRide(View view) {
 
         // Query the database for requested rides by the current user
-        Query query = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
-        query.addValueEventListener(new ValueEventListener() {
+        Query offeredRidesQuery = mDatabase.child("rides").orderByChild("rider").equalTo(null);
+        offeredRidesQuery.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Clear the existing layout
@@ -265,8 +305,39 @@ public class HomeScreenFragment extends Fragment {
                         textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
                         textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
 
-                        // Add the TextView to the layout
+                        // Create update and delete buttons
+                        Button updateButton = new Button(getContext());
+                        updateButton.setText("Update");
+                        Button deleteButton = new Button(getContext());
+                        deleteButton.setText("Delete");
+
+                        // Set OnClickListener for update button
+                        updateButton.setOnClickListener(v -> {
+                            // Handle update button click
+                            // You can implement the update logic here
+                            // For example, show a dialog to update ride details
+                        });
+
+                        // Set OnClickListener for delete button
+                        deleteButton.setOnClickListener(v -> {
+                            // Remove the ride from the database
+                            snapshot.getRef().removeValue()
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Ride deleted successfully, remove the ride views from the layout
+                                        offeredRidesLayout.removeView(textView);
+                                        offeredRidesLayout.removeView(updateButton);
+                                        offeredRidesLayout.removeView(deleteButton);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        // Handle failed deletion
+                                        Log.e("HomeScreenFragment", "Failed to delete ride: " + e.getMessage());
+                                    });
+                        });
+
+                        // Add the TextView, update button, and delete button to the layout
                         offeredRidesLayout.addView(textView);
+                        offeredRidesLayout.addView(updateButton);
+                        offeredRidesLayout.addView(deleteButton);
                     }
                 }
             }

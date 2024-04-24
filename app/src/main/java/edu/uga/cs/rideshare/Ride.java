@@ -1,8 +1,12 @@
 package edu.uga.cs.rideshare;
 
+import com.google.firebase.database.Exclude;
+
 import java.util.Date;
 
 public class Ride {
+
+    public String key;
     public String date;
     public String goingTo;
     public String from;
@@ -17,7 +21,8 @@ public class Ride {
 
     }
 
-    public Ride (String date, String goingTo, String from, User driver, User rider) {
+    public Ride (String key, String date, String goingTo, String from, User driver, User rider) {
+        this.key = key;
         this.date = date;
         this.goingTo = goingTo;
         this.from = from;
@@ -39,6 +44,18 @@ public class Ride {
             riderAccepted = false;
             driverAccepted = false;
         }
+    }
+
+    // Method to set the key
+    @Exclude
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    // Method to get the key
+    @Exclude
+    public String getKey() {
+        return key;
     }
 
     public void updatedCompletedDriver(boolean val){

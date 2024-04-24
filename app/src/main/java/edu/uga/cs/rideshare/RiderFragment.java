@@ -1,8 +1,8 @@
 package edu.uga.cs.rideshare;
-
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,6 +30,7 @@ public class RiderFragment extends Fragment {
     private DatabaseReference mDatabase;
     private List<Ride> rideList;
     private String dateTimeString;
+
     public RiderFragment(User currentUser, List<User> userList, List<Ride> rideList) {
         // Required empty public constructor
         this.currentUser = currentUser;
@@ -45,6 +45,7 @@ public class RiderFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_rider, container, false);
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
+
         // Find the start button
         Button homeButton = view.findViewById(R.id.home_button);
         Button dateButton = view.findViewById(R.id.date_time_button);
@@ -58,53 +59,43 @@ public class RiderFragment extends Fragment {
                     .commit();
         });
 
-
-        List<Ride> rList = new ArrayList<>();
-        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
-        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
-        rList.add(new Ride("date", "Home", "not Home", currentUser, null));
-
-
         LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
-        for (int i = rList.size() - 1; i >= 0; i--) {
-            Ride ride = rList.get(i);
 
+        // Populate rList with rides that meet the criteria
+        List<Ride> rList = getAvailableRides();
+
+        // Display available rides
+        for (Ride ride : rList) {
             // Create a TextView to display ride information
             TextView textView = new TextView(getContext());
             textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
             textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
 
+            Button acceptButton = new Button(getContext());
+            acceptButton.setTextAppearance(getContext(), R.style.MyButtonStyle);
+            acceptButton.setText("Accept Ride");
 
-            Button updateButton = new Button(getContext());
-            updateButton.setTextAppearance(getContext(), R.style.MyButtonStyle);
-            updateButton.setText("Update");
-
-            Button deleteButton = new Button(getContext());
-            deleteButton.setTextAppearance(getContext(), R.style.MyButtonStyle);
-            deleteButton.setText("Delete");
-
-            updateButton.setOnClickListener(v -> {
-
-                // Remove the button after it's clicked
-                rLayout.removeView(updateButton);
-                rLayout.removeView(deleteButton);
+            acceptButton.setOnClickListener(v -> {
+                // Update ride when accept button is clicked
+                ride.riderAccepted = true;
+                ride.rider = currentUser;
+                // Update UI
+                rLayout.removeView(acceptButton);
                 rLayout.removeView(textView);
-            });
+                Log.d("rideRef:, ", "here");
+                // Update ride in the database
+                DatabaseReference rideRef = mDatabase.child("rides").child(ride.getKey());
+                Log.d("rideRef:, ", rideRef.toString());
+                rideRef.child("riderAccepted").setValue(true);
+                rideRef.child("rider").setValue(currentUser);
 
-
-
-            deleteButton.setOnClickListener(v -> {
-                rList.remove(ride);
-                // Remove the button after it's clicked
-                rLayout.removeView(deleteButton);
-                rLayout.removeView(updateButton);
-                rLayout.removeView(textView);
+                // Show toast message
+                Toast.makeText(getContext(), "Ride Accepted", Toast.LENGTH_SHORT).show();
             });
 
             // Add the TextView and Button to the layout
             rLayout.addView(textView);
-            rLayout.addView(updateButton);
-            rLayout.addView(deleteButton);
+            rLayout.addView(acceptButton);
         }
 
         // Date and Time Selection
@@ -150,7 +141,7 @@ public class RiderFragment extends Fragment {
         // Post ride request
         postRequestButton.setOnClickListener((View.OnClickListener) v -> {
             String startLocation = startLocationInput.getText().toString();
-            String destination = destinationInput.getText().toString(); // Set start location
+            String destination = destinationInput.getText().toString();
             postRideRequest(dateTimeString, startLocation, destination);
         });
 
@@ -159,16 +150,34 @@ public class RiderFragment extends Fragment {
 
     private void postRideRequest(String date, String startLocation, String destination) {
         String key = mDatabase.child("rides").push().getKey();
-        Ride ride = new Ride(date, destination, startLocation, null, currentUser);
-        mDatabase.child("rides").child(key).setValue(ride)
+        Log.d("key:", key);
+        Ride ride = new Ride(key, date, destination, startLocation, null, currentUser);
+        if (ride == null) {
+            Log.e("Ride object", "Ride object is null");
+            return;
+        }
+
+        DatabaseReference rideRef = mDatabase.child("rides").child(ride.getKey());
+        rideRef.child("date").setValue(date);
+        rideRef.child("destination").setValue(destination);
+        rideRef.child("startLocation").setValue(startLocation);
+        rideRef.child("rider").setValue(currentUser);
+        rideRef.child("riderAccepted").setValue(true)
                 .addOnSuccessListener(aVoid -> {
-                    // Ride posted successfully, show toast message
-                    Toast.makeText(getContext(), "Ride Posted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Ride Accepted", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    // Ride posting failed, show error toast message
-                    Toast.makeText(getContext(), "Failed to post ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to accept ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
+    private List<Ride> getAvailableRides() {
+        List<Ride> availableRides = new ArrayList<>();
+        for (Ride ride : rideList) {
+            if (ride.driverAccepted && !ride.riderAccepted) {
+                availableRides.add(ride);
+            }
+        }
+        return availableRides;
+    }
 }

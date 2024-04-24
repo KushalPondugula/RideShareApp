@@ -3,6 +3,7 @@ package edu.uga.cs.rideshare;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -112,7 +113,8 @@ public class DriverFragment extends Fragment {
 
     private void postRideRequest(String date, String startLocation, String destination) {
         String key = mDatabase.child("rides").push().getKey();
-        Ride ride = new Ride(date, destination, startLocation, currentUser, null);
+        Log.d("key:, ", key);
+        Ride ride = new Ride(key, date, destination, startLocation, currentUser, null);
         mDatabase.child("rides").child(key).setValue(ride)
                 .addOnSuccessListener(aVoid -> {
                     // Ride posted successfully, show toast message
