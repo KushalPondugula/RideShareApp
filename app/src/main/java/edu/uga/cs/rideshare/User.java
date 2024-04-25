@@ -15,12 +15,16 @@ public class User {
         this.points = 50;
     }
 
-    public void addPoints() {
-        points += 50;
-    }
-
-    public void subtractPoints() {
-        points -= 50;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        User user = (User) obj;
+        return email.equals(user.email);
     }
 
 }

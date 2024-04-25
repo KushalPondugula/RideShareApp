@@ -96,7 +96,7 @@
 
 
         <TextView
-            android:id="@+id/available_rides"
+            android:id="@+id/requested_rides"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
@@ -108,14 +108,14 @@
             app:layout_constraintTop_toBottomOf="@+id/a_rides_layout" />
 
         <LinearLayout
-            android:id="@+id/av_rides_layout"
+            android:id="@+id/r_rides_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.149"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/available_rides">
+            app:layout_constraintTop_toBottomOf="@+id/requested_rides">
         </LinearLayout>
 
         <View
@@ -125,7 +125,7 @@
             android:background="#000000"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/av_rides_layout" />
+            app:layout_constraintTop_toBottomOf="@+id/r_rides_layout" />
 
         <TextView
             android:id="@+id/offered_rides"
@@ -136,7 +136,7 @@
             android:textSize="40sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/av_rides_layout" />
+            app:layout_constraintTop_toBottomOf="@+id/r_rides_layout" />
 
         <LinearLayout
             android:id="@+id/o_rides_layout"

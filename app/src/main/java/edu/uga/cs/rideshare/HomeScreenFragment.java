@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,6 +33,7 @@ public class HomeScreenFragment extends Fragment {
     private List<User> userList;
 
     private List<Ride> rideList;
+
     public HomeScreenFragment(User currentUser, List<User> userList, List<Ride> rideList) {
         // Required empty public constructor
         this.currentUser = currentUser;
@@ -79,8 +81,12 @@ public class HomeScreenFragment extends Fragment {
                     .commit();
         });
 
-        Log.d("rideList, HS:", String.valueOf(rideList));
+        //Log.d("rideList, HS:", String.valueOf(rideList));
         List<Ride> aList = filterAcceptedRides(rideList);
+//        List<Ride> aList = new ArrayList<>();
+//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
+//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
+//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
 
 
         LinearLayout aLayout = view.findViewById(R.id.a_rides_layout);
@@ -101,10 +107,26 @@ public class HomeScreenFragment extends Fragment {
             // Set an OnClickListener for the button to update ride status when clicked
             button.setOnClickListener(v -> {
                 // Update ride status to completed
-                ride.rideCompletedDriver = true;
+                String key = ride.key;
+                if (currentUser.equals(ride.driver)) {
+                    // Current user is the driver, add 50 points
+                    currentUser.points += 50;
+                    ride.rideCompletedDriver = true;
+                } else if (currentUser.equals(ride.rider)) {
+                    // Current user is the rider, subtract 50 points
+                    currentUser.points -= 50;
+                    ride.rideCompletedRider = true;
+                }
+
+                FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                String userId = firebaseUser.getUid();
+                mDatabase.child("users").child(userId).setValue(currentUser);
+                mDatabase.child("rides").child(key).setValue(ride);
                 // Remove the button after it's clicked
                 aLayout.removeView(button);
                 aLayout.removeView(textView);
+                points.setText(String.valueOf(currentUser.points));
             });
 
             // Add the TextView and Button to the layout
@@ -113,11 +135,10 @@ public class HomeScreenFragment extends Fragment {
         }
 
 
-        List<Ride> rList = filterRidesForCurrentUser(rideList, currentUser);
+        List<Ride> rList = filterRequestedRides(rideList);
+        Log.d("rList", String.valueOf(rList));
 
-
-
-        LinearLayout rLayout = view.findViewById(R.id.a_rides_layout);
+        LinearLayout rLayout = view.findViewById(R.id.r_rides_layout);
         for (int i = rList.size() - 1; i >= 0; i--) {
             Ride ride = rList.get(i);
 
@@ -144,7 +165,6 @@ public class HomeScreenFragment extends Fragment {
             });
 
 
-
             deleteButton.setOnClickListener(v -> {
                 rList.remove(ride);
                 // Remove the button after it's clicked
@@ -161,6 +181,7 @@ public class HomeScreenFragment extends Fragment {
 
 
         List<Ride> oList = new ArrayList<>();
+        oList = filterOfferedRides(rideList);
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
@@ -193,9 +214,8 @@ public class HomeScreenFragment extends Fragment {
             });
 
 
-
             deleteButton.setOnClickListener(v -> {
-                oList.remove(ride);
+                //oList.remove(ride);
                 // Remove the button after it's clicked
                 oLayout.removeView(deleteButton);
                 oLayout.removeView(updateButton);
@@ -207,20 +227,20 @@ public class HomeScreenFragment extends Fragment {
             oLayout.addView(updateButton);
             oLayout.addView(deleteButton);
         }
-        retrieveRequestedRides(view);
-        retrieveOfferedRide(view);
+        //retrieveRequestedRides(view);
+        //retrieveOfferedRide(view);
         return view;
     }
 
     private void retrieveRequestedRides(View view) {
 
         // Query the database for requested rides by the current user
-        Query requestedRidesQuery  = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
-        requestedRidesQuery .addValueEventListener(new ValueEventListener() {
+        Query requestedRidesQuery = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
+        requestedRidesQuery.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Clear the existing layout
-                LinearLayout requestedRidesLayout = view.findViewById(R.id.av_rides_layout);
+                LinearLayout requestedRidesLayout = view.findViewById(R.id.r_rides_layout);
                 requestedRidesLayout.removeAllViews();
 
                 // Iterate through the retrieved rides and display them
@@ -372,22 +392,62 @@ public class HomeScreenFragment extends Fragment {
 
     private List<Ride> filterAcceptedRides(List<Ride> rideList) {
         List<Ride> filteredList = new ArrayList<>();
-        for (Ride ride : rideList) {
-            if (ride.driverAccepted && ride.riderAccepted && (ride.driver.equals(currentUser) || ride.rider.equals(currentUser))) {
-                filteredList.add(ride);
+        retrieveRides();
+        try {
+            for (Ride ride : rideList) {
+                if ((ride.driver != null && ride.driver.equals(currentUser)) || (ride.rider != null && ride.rider.equals(currentUser))) {
+                    if (ride.driverAccepted && ride.riderAccepted) {
+                        if (!ride.rideCompletedDriver && ride.driver.equals(currentUser)) {
+                            filteredList.add(ride);
+                        } else if (!ride.rideCompletedRider && ride.rider.equals(currentUser)) {
+                            filteredList.add(ride);
+                        }
+                    }
+                }
             }
+        } catch (NullPointerException e) {
+            // Handle the exception here, such as logging an error message or displaying a toast
+            Log.e("NullPointerException", "One of the objects is null: " + e.getMessage());
         }
         return filteredList;
     }
 
-    private List<Ride> filterRidesForCurrentUser(List<Ride> rideList, User currentUser) {
-        List<Ride> filteredRides = new ArrayList<>();
-        for (Ride ride : rideList) {
-            if (ride.rider == null && ride.driver != null && ride.driver.equals(currentUser)) {
-                // Add the ride to filteredRides if it has no rider and the driver is the current user
-                filteredRides.add(ride);
+    private List<Ride> filterRequestedRides(List<Ride> rideList) {
+        List<Ride> filteredList = new ArrayList<>();
+        retrieveRides();
+        try {
+            for (Ride ride : rideList) {
+                //Log.d("!(ride.rideCompletedDriver && ride.rideCompletedRider)", String.valueOf(!(ride.rideCompletedDriver && ride.rideCompletedRider)));
+                if (!(ride.rideCompletedDriver && ride.rideCompletedRider)) {
+                    if (ride.rider.equals(currentUser) && !(ride.driverAccepted)) {
+                        filteredList.add(ride);
+                    }
+                }
             }
+        } catch (NullPointerException e) {
+            // Handle the exception here, such as logging an error message or displaying a toast
+            Log.e("NullPointerException", "One of the objects is null: " + e.getMessage());
         }
-        return filteredRides;
+        //Log.d("fileterList", String.valueOf(filteredList));
+        return filteredList;
     }
+
+    private List<Ride> filterOfferedRides(List<Ride> rideList) {
+        List<Ride> filteredList = new ArrayList<>();
+        retrieveRides();
+        try {
+            for (Ride ride : rideList) {
+                if (!(ride.rideCompletedDriver && ride.rideCompletedRider)) {
+                    if (ride.driver.equals(currentUser) && !(ride.riderAccepted)) {
+                        filteredList.add(ride);
+                    }
+                }
+            }
+        } catch (NullPointerException e) {
+            // Handle the exception here, such as logging an error message or displaying a toast
+            Log.e("NullPointerException", "One of the objects is null: " + e.getMessage());
+        }
+        return filteredList;
+    }
+
 }
