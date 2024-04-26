@@ -1,6 +1,5 @@
 package edu.uga.cs.rideshare;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -30,7 +29,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,66 +37,100 @@ public class HomeScreenFragment extends Fragment {
     private DatabaseReference mDatabase;
     private User currentUser;
     private List<User> userList;
-
     private List<Ride> rideList;
+    private View view;
 
     public HomeScreenFragment(User currentUser, List<User> userList, List<Ride> rideList) {
-        // Required empty public constructor
         this.currentUser = currentUser;
         this.userList = userList;
         this.rideList = rideList;
     }
 
 
+//    @Override
+//    public void onResume() {
+//        super.onResume();
+//        // Refresh the ride list and update the UI
+//        retrieveRides(new RideListUpdateListener() {
+//            @Override
+//            public void onRideListUpdated(List<Ride> updatedRideList) {
+//                rideList = updatedRideList;
+//                populateViews(view); // Call populateViews with rootView
+//            }
+//        });
+//    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_screen_home, container, false);
+        view = inflater.inflate(R.layout.fragment_screen_home, container, false);
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        retrieveRides();
+        retrieveRides(new RideListUpdateListener() {
+            @Override
+            public void onRideListUpdated(List<Ride> updatedRideList) {
+                rideList = updatedRideList;
+                populateViews(view);
+            }
+        });
         TextView points = view.findViewById(R.id.points);
         points.setText(String.valueOf(currentUser.points));
 
-        // Find the start button
+        // Find the buttons
         Button logoutButton = view.findViewById(R.id.logoutHomeScreen);
         Button driverButton = view.findViewById(R.id.give_ride_button);
         Button riderButton = view.findViewById(R.id.get_ride_button);
 
-        // Set OnClickListener to go to DriverFragment when driverButton is clicked
-        driverButton.setOnClickListener((View.OnClickListener) v -> {
-            // Replace the HomeScreenFragment with the DriverFragment
+        // Set OnClickListener for driverButton
+        driverButton.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new DriverFragment(currentUser, userList, rideList))
                     .commit();
         });
 
-        // Set OnClickListener to go to RiderFragment when riderButton is clicked
-        riderButton.setOnClickListener((View.OnClickListener) v -> {
-            // Replace the HomeScreenFragment with the RiderFragment
+        // Set OnClickListener for riderButton
+        riderButton.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new RiderFragment(currentUser, userList, rideList))
                     .commit();
         });
 
-        // Set OnClickListener to logout back to splash screen when clicked
-        logoutButton.setOnClickListener((View.OnClickListener) v -> {
-            // Replace the HomeScreenFragment with the SplashFragment
+        // Set OnClickListener for logoutButton
+        logoutButton.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new SplashFragment())
                     .commit();
         });
 
-        //Log.d("rideList, HS:", String.valueOf(rideList));
-        List<Ride> aList = filterAcceptedRides(rideList);
-//        List<Ride> aList = new ArrayList<>();
-//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
-//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
-//        aList.add(new Ride("key","date", "Home", "not Home", currentUser, null));
+        return view;
+    }
 
+    private void retrieveRides(RideListUpdateListener listener) {
+        mDatabase.child("rides").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Ride> updatedRideList = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Ride ride = snapshot.getValue(Ride.class);
+                    updatedRideList.add(ride);
+                }
+                listener.onRideListUpdated(updatedRideList);
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle onCancelled
+            }
+        });
+    }
+
+    private void populateViews(View view) {
+        List<Ride> aList = new ArrayList<>();
+        List<Ride> rList = new ArrayList<>();
+        List<Ride> oList = new ArrayList<>();
+        // Populate views based on the updated ride list
+        aList = filterAcceptedRides();
         LinearLayout aLayout = view.findViewById(R.id.a_rides_layout);
 
         for (int i = aList.size() - 1; i >= 0; i--) {
@@ -136,8 +168,9 @@ public class HomeScreenFragment extends Fragment {
                 // Remove the button after it's clicked
                 aLayout.removeView(button);
                 aLayout.removeView(textView);
+                TextView points = view.findViewById(R.id.points);
                 points.setText(String.valueOf(currentUser.points));
-                aList.remove(ride);
+
             });
 
             // Add the TextView and Button to the layout
@@ -145,10 +178,7 @@ public class HomeScreenFragment extends Fragment {
             aLayout.addView(button);
         }
 
-
-        List<Ride> rList = filterRequestedRides(rideList);
-        Log.d("rList", String.valueOf(rList));
-
+        rList = filterRequestedRides();
         LinearLayout rLayout = view.findViewById(R.id.r_rides_layout);
         for (int i = rList.size() - 1; i >= 0; i--) {
             Ride ride = rList.get(i);
@@ -168,6 +198,7 @@ public class HomeScreenFragment extends Fragment {
             deleteButton.setText("Delete");
 
             updateButton.setOnClickListener(v -> {
+
                 // Create a dialog for updating ride information
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle("Update Ride Information");
@@ -229,6 +260,10 @@ public class HomeScreenFragment extends Fragment {
 
                 // Set positive button for updating ride
                 builder.setPositiveButton("Update", (dialog, which) -> {
+
+                    rLayout.removeView(deleteButton);
+                    rLayout.removeView(updateButton);
+                    rLayout.removeView(textView);
                     // Get updated information from EditText fields
                     String updatedDate = dateEditText.getText().toString();
                     String updatedDestination = destinationEditText.getText().toString();
@@ -243,6 +278,7 @@ public class HomeScreenFragment extends Fragment {
                     mDatabase.child("rides").child(ride.key).setValue(ride)
                             .addOnSuccessListener(aVoid -> {
                                 // Ride updated successfully
+                                populateViews(view);
                                 Toast.makeText(getContext(), "Ride updated successfully", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
@@ -266,7 +302,7 @@ public class HomeScreenFragment extends Fragment {
 
 
             deleteButton.setOnClickListener(v -> {
-                rList.remove(ride);
+                //rList.remove(ride);
                 String key = ride.key;
                 mDatabase.child("rides").child(key).setValue(null);
                 // Remove the button after it's clicked
@@ -281,14 +317,7 @@ public class HomeScreenFragment extends Fragment {
             rLayout.addView(deleteButton);
         }
 
-
-        List<Ride> oList = filterOfferedRides(rideList);
-
-//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
-//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
-//        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
-
-
+        oList = filterOfferedRides();
         LinearLayout oLayout = view.findViewById(R.id.o_rides_layout);
         for (int i = oList.size() - 1; i >= 0; i--) {
             Ride ride = oList.get(i);
@@ -369,6 +398,9 @@ public class HomeScreenFragment extends Fragment {
 
                 // Set positive button for updating ride
                 builder.setPositiveButton("Update", (dialog, which) -> {
+                    oLayout.removeView(deleteButton);
+                    oLayout.removeView(updateButton);
+                    oLayout.removeView(textView);
                     // Get updated information from EditText fields
                     String updatedDate = dateEditText.getText().toString();
                     String updatedDestination = destinationEditText.getText().toString();
@@ -384,11 +416,13 @@ public class HomeScreenFragment extends Fragment {
                             .addOnSuccessListener(aVoid -> {
                                 // Ride updated successfully
                                 Toast.makeText(getContext(), "Ride updated successfully", Toast.LENGTH_SHORT).show();
+                                populateViews(view);
                             })
                             .addOnFailureListener(e -> {
                                 // Failed to update ride
                                 Toast.makeText(getContext(), "Failed to update ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
+
                 });
 
                 // Set negative button for canceling the update
@@ -404,7 +438,7 @@ public class HomeScreenFragment extends Fragment {
 
 
             deleteButton.setOnClickListener(v -> {
-                oList.remove(ride);
+                //oList.remove(ride);
                 String key = ride.key;
                 mDatabase.child("rides").child(key).setValue(null);
                 // Remove the button after it's clicked
@@ -418,172 +452,10 @@ public class HomeScreenFragment extends Fragment {
             oLayout.addView(updateButton);
             oLayout.addView(deleteButton);
         }
-        //retrieveRequestedRides(view);
-        //retrieveOfferedRide(view);
-        return view;
     }
 
-    private void retrieveRequestedRides(View view) {
-
-        // Query the database for requested rides by the current user
-        Query requestedRidesQuery = mDatabase.child("rides").orderByChild("rider/email").equalTo(currentUser.email);
-        requestedRidesQuery.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Clear the existing layout
-                LinearLayout requestedRidesLayout = view.findViewById(R.id.r_rides_layout);
-                requestedRidesLayout.removeAllViews();
-
-                // Iterate through the retrieved rides and display them
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Ride ride = snapshot.getValue(Ride.class);
-                    if (ride != null && getContext() != null) {
-                        // Create a TextView to display ride information
-                        TextView textView = new TextView(getContext());
-                        textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
-                        textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
-                        // Create update and delete buttons
-                        Button updateButton = new Button(getContext());
-                        updateButton.setText("Update");
-                        Button deleteButton = new Button(getContext());
-                        deleteButton.setText("Delete");
-
-                        // Set OnClickListener for update button
-                        updateButton.setOnClickListener(v -> {
-                            // Handle update button click
-                            // Replace the current fragment with the RiderFragment
-                            Fragment riderFragment = new RiderFragment(currentUser, userList, rideList); // Create a new instance of RiderFragment
-                            Bundle args = new Bundle();
-                            //  args.putString("rideId", ride.key);
-                            riderFragment.setArguments(args);
-
-                            // Replace the current fragment with the RiderFragment
-                            requireActivity().getSupportFragmentManager().beginTransaction()
-                                    .replace(R.id.fragment_container, riderFragment)
-                                    .addToBackStack(null)  // Optional: Add fragment transaction to back stack
-                                    .commit();
-                        });
-
-                        // Set OnClickListener for delete button
-                        deleteButton.setOnClickListener(v -> {
-                            // Remove the ride from the database
-                            snapshot.getRef().removeValue()
-                                    .addOnSuccessListener(aVoid -> {
-                                        // Ride deleted successfully, remove the ride views from the layout
-                                        requestedRidesLayout.removeView(textView);
-                                        requestedRidesLayout.removeView(updateButton);
-                                        requestedRidesLayout.removeView(deleteButton);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        // Handle failed deletion
-                                        Log.e("HomeScreenFragment", "Failed to delete ride: " + e.getMessage());
-                                    });
-                        });
-
-                        // Add the TextView, update button, and delete button to the layout
-                        requestedRidesLayout.addView(textView);
-                        requestedRidesLayout.addView(updateButton);
-                        requestedRidesLayout.addView(deleteButton);
-
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle onCancelled
-                Log.e("HomeScreenFragment", "Database query cancelled: " + databaseError.getMessage());
-            }
-        });
-    }
-
-    private void retrieveOfferedRide(View view) {
-
-        // Query the database for requested rides by the current user
-        Query offeredRidesQuery = mDatabase.child("rides").orderByChild("rider").equalTo(null);
-        offeredRidesQuery.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Clear the existing layout
-                LinearLayout offeredRidesLayout = view.findViewById(R.id.o_rides_layout);
-                offeredRidesLayout.removeAllViews();
-
-                // Iterate through the retrieved rides and display them
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Ride ride = snapshot.getValue(Ride.class);
-                    if (ride != null && getContext() != null) {
-                        // Create a TextView to display ride information
-                        TextView textView = new TextView(getContext());
-                        textView.setTextAppearance(getContext(), R.style.MyTextViewStyle);
-                        textView.setText("\n\nRide Date: " + ride.date + "\n" + "To: " + ride.goingTo + ", From: " + ride.from);
-
-                        // Create update and delete buttons
-                        Button updateButton = new Button(getContext());
-                        updateButton.setText("Update");
-                        Button deleteButton = new Button(getContext());
-                        deleteButton.setText("Delete");
-
-                        // Set OnClickListener for update button
-                        updateButton.setOnClickListener(v -> {
-                            // Handle update button click
-                            // You can implement the update logic here
-                            // For example, show a dialog to update ride details
-                        });
-
-                        // Set OnClickListener for delete button
-                        deleteButton.setOnClickListener(v -> {
-                            // Remove the ride from the database
-                            snapshot.getRef().removeValue()
-                                    .addOnSuccessListener(aVoid -> {
-                                        // Ride deleted successfully, remove the ride views from the layout
-                                        offeredRidesLayout.removeView(textView);
-                                        offeredRidesLayout.removeView(updateButton);
-                                        offeredRidesLayout.removeView(deleteButton);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        // Handle failed deletion
-                                        Log.e("HomeScreenFragment", "Failed to delete ride: " + e.getMessage());
-                                    });
-                        });
-
-                        // Add the TextView, update button, and delete button to the layout
-                        offeredRidesLayout.addView(textView);
-                        offeredRidesLayout.addView(updateButton);
-                        offeredRidesLayout.addView(deleteButton);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle onCancelled
-                Log.e("HomeScreenFragment", "Database query cancelled: " + databaseError.getMessage());
-            }
-        });
-    }
-
-    private void retrieveRides() {
-        mDatabase.child("rides").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                rideList = new ArrayList<>();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Ride ride = snapshot.getValue(Ride.class);
-                    rideList.add(ride);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle error
-            }
-        });
-    }
-
-
-    private List<Ride> filterAcceptedRides(List<Ride> rideList) {
+    private List<Ride> filterAcceptedRides() {
         List<Ride> filteredList = new ArrayList<>();
-        retrieveRides();
         try {
             for (Ride ride : rideList) {
                 if ((ride.driver != null && ride.driver.equals(currentUser)) || (ride.rider != null && ride.rider.equals(currentUser))) {
@@ -603,9 +475,8 @@ public class HomeScreenFragment extends Fragment {
         return filteredList;
     }
 
-    private List<Ride> filterRequestedRides(List<Ride> rideList) {
+    private List<Ride> filterRequestedRides() {
         List<Ride> filteredList = new ArrayList<>();
-        retrieveRides();
         try {
             for (Ride ride : rideList) {
                 //Log.d("!(ride.rideCompletedDriver && ride.rideCompletedRider)", String.valueOf(!(ride.rideCompletedDriver && ride.rideCompletedRider)));
@@ -623,9 +494,8 @@ public class HomeScreenFragment extends Fragment {
         return filteredList;
     }
 
-    private List<Ride> filterOfferedRides(List<Ride> rideList) {
+    private List<Ride> filterOfferedRides() {
         List<Ride> filteredList = new ArrayList<>();
-        retrieveRides();
         try {
             for (Ride ride : rideList) {
                 if (!(ride.rideCompletedDriver && ride.rideCompletedRider)) {
@@ -641,4 +511,8 @@ public class HomeScreenFragment extends Fragment {
         return filteredList;
     }
 
+    // Define callback interface
+    interface RideListUpdateListener {
+        void onRideListUpdated(List<Ride> updatedRideList);
+    }
 }
