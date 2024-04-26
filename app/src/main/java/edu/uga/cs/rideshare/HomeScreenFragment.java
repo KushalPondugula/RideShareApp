@@ -49,6 +49,8 @@ public class HomeScreenFragment extends Fragment {
         this.rideList = rideList;
     }
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
