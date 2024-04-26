@@ -1,14 +1,19 @@
 package edu.uga.cs.rideshare;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,9 +27,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class HomeScreenFragment extends Fragment {
 
@@ -127,6 +135,7 @@ public class HomeScreenFragment extends Fragment {
                 aLayout.removeView(button);
                 aLayout.removeView(textView);
                 points.setText(String.valueOf(currentUser.points));
+                aList.remove(ride);
             });
 
             // Add the TextView and Button to the layout
@@ -157,16 +166,107 @@ public class HomeScreenFragment extends Fragment {
             deleteButton.setText("Delete");
 
             updateButton.setOnClickListener(v -> {
+                // Create a dialog for updating ride information
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Update Ride Information");
 
-                // Remove the button after it's clicked
-                rLayout.removeView(updateButton);
-                rLayout.removeView(deleteButton);
-                rLayout.removeView(textView);
+                // Inflate the layout for the dialog
+                View dialogView = getLayoutInflater().inflate(R.layout.dialog_update_ride, null);
+                builder.setView(dialogView);
+
+                // Initialize views in the dialog layout
+                EditText dateEditText = dialogView.findViewById(R.id.dateEditText);
+                EditText destinationEditText = dialogView.findViewById(R.id.destinationEditText);
+                EditText startLocationEditText = dialogView.findViewById(R.id.startLocationEditText);
+                Button dateButton = dialogView.findViewById(R.id.dateButton);
+
+                // Set the current ride information in the EditText fields
+                dateEditText.setText(ride.date);
+                destinationEditText.setText(ride.goingTo);
+                startLocationEditText.setText(ride.from);
+
+                // Date and Time Selection
+                dateButton.setOnClickListener(v1 -> {
+                    // Get current date
+                    Calendar calendar = Calendar.getInstance();
+                    int year = calendar.get(Calendar.YEAR);
+                    int month = calendar.get(Calendar.MONTH);
+                    int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+                    // Create date picker dialog
+                    DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view1, year1, monthOfYear, dayOfMonth) -> {
+                        // Get selected date
+                        Calendar timeCalendar = Calendar.getInstance();
+                        int hour = timeCalendar.get(Calendar.HOUR_OF_DAY);
+                        int minute = timeCalendar.get(Calendar.MINUTE);
+
+                        // Create time picker dialog
+                        TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(), (view2, hourOfDay, minute1) -> {
+                            // Handle selected date and time
+                            Calendar selectedDateTime = Calendar.getInstance();
+                            selectedDateTime.set(year1, monthOfYear, dayOfMonth, hourOfDay, minute1);
+
+                            // Format the selected date and time
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.US);
+                            String dateTimeString = dateFormat.format(selectedDateTime.getTime());
+
+                            // Display the selected date and time
+                            Toast.makeText(getContext(), "Selected Date and Time: " + dateTimeString, Toast.LENGTH_LONG).show();
+
+                            // Set the selected date/time in the EditText
+                            dateEditText.setText(dateTimeString);
+                        }, hour, minute, false);
+
+                        // Show time picker dialog
+                        timePickerDialog.show();
+                    }, year, month, day);
+
+                    // Show date picker dialog
+                    datePickerDialog.show();
+                });
+
+                // Set positive button for updating ride
+                builder.setPositiveButton("Update", (dialog, which) -> {
+                    // Get updated information from EditText fields
+                    String updatedDate = dateEditText.getText().toString();
+                    String updatedDestination = destinationEditText.getText().toString();
+                    String updatedStartLocation = startLocationEditText.getText().toString();
+
+                    // Update ride information
+                    ride.date = updatedDate;
+                    ride.goingTo = updatedDestination;
+                    ride.from = updatedStartLocation;
+
+                    // Update ride in the database
+                    mDatabase.child("rides").child(ride.key).setValue(ride)
+                            .addOnSuccessListener(aVoid -> {
+                                // Ride updated successfully
+                                Toast.makeText(getContext(), "Ride updated successfully", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                // Failed to update ride
+                                Toast.makeText(getContext(), "Failed to update ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                });
+
+                // Set negative button for canceling the update
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    // Dismiss the dialog
+                    dialog.dismiss();
+                });
+
+                // Show the dialog
+                AlertDialog dialog = builder.create();
+                dialog.show();
             });
+
+
 
 
             deleteButton.setOnClickListener(v -> {
                 rList.remove(ride);
+                String key = ride.key;
+                mDatabase.child("rides").child(key).setValue(null);
                 // Remove the button after it's clicked
                 rLayout.removeView(deleteButton);
                 rLayout.removeView(updateButton);
@@ -180,8 +280,8 @@ public class HomeScreenFragment extends Fragment {
         }
 
 
-        List<Ride> oList = new ArrayList<>();
-        oList = filterOfferedRides(rideList);
+        List<Ride> oList = filterOfferedRides(rideList);
+
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
 //        oList.add(new Ride("date", "Home", "not Home", currentUser, null));
@@ -206,16 +306,105 @@ public class HomeScreenFragment extends Fragment {
             deleteButton.setText("Delete");
 
             updateButton.setOnClickListener(v -> {
+                // Create a dialog for updating ride information
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Update Ride Information");
 
-                // Remove the button after it's clicked
-                oLayout.removeView(updateButton);
-                oLayout.removeView(deleteButton);
-                oLayout.removeView(textView);
+                // Inflate the layout for the dialog
+                View dialogView = getLayoutInflater().inflate(R.layout.dialog_update_ride, null);
+                builder.setView(dialogView);
+
+                // Initialize views in the dialog layout
+                EditText dateEditText = dialogView.findViewById(R.id.dateEditText);
+                EditText destinationEditText = dialogView.findViewById(R.id.destinationEditText);
+                EditText startLocationEditText = dialogView.findViewById(R.id.startLocationEditText);
+                Button dateButton = dialogView.findViewById(R.id.dateButton);
+
+                // Set the current ride information in the EditText fields
+                dateEditText.setText(ride.date);
+                destinationEditText.setText(ride.goingTo);
+                startLocationEditText.setText(ride.from);
+
+                // Date and Time Selection
+                dateButton.setOnClickListener(v1 -> {
+                    // Get current date
+                    Calendar calendar = Calendar.getInstance();
+                    int year = calendar.get(Calendar.YEAR);
+                    int month = calendar.get(Calendar.MONTH);
+                    int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+                    // Create date picker dialog
+                    DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view1, year1, monthOfYear, dayOfMonth) -> {
+                        // Get selected date
+                        Calendar timeCalendar = Calendar.getInstance();
+                        int hour = timeCalendar.get(Calendar.HOUR_OF_DAY);
+                        int minute = timeCalendar.get(Calendar.MINUTE);
+
+                        // Create time picker dialog
+                        TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(), (view2, hourOfDay, minute1) -> {
+                            // Handle selected date and time
+                            Calendar selectedDateTime = Calendar.getInstance();
+                            selectedDateTime.set(year1, monthOfYear, dayOfMonth, hourOfDay, minute1);
+
+                            // Format the selected date and time
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm", Locale.US);
+                            String dateTimeString = dateFormat.format(selectedDateTime.getTime());
+
+                            // Display the selected date and time
+                            Toast.makeText(getContext(), "Selected Date and Time: " + dateTimeString, Toast.LENGTH_LONG).show();
+
+                            // Set the selected date/time in the EditText
+                            dateEditText.setText(dateTimeString);
+                        }, hour, minute, false);
+
+                        // Show time picker dialog
+                        timePickerDialog.show();
+                    }, year, month, day);
+
+                    // Show date picker dialog
+                    datePickerDialog.show();
+                });
+
+                // Set positive button for updating ride
+                builder.setPositiveButton("Update", (dialog, which) -> {
+                    // Get updated information from EditText fields
+                    String updatedDate = dateEditText.getText().toString();
+                    String updatedDestination = destinationEditText.getText().toString();
+                    String updatedStartLocation = startLocationEditText.getText().toString();
+
+                    // Update ride information
+                    ride.date = updatedDate;
+                    ride.goingTo = updatedDestination;
+                    ride.from = updatedStartLocation;
+
+                    // Update ride in the database
+                    mDatabase.child("rides").child(ride.key).setValue(ride)
+                            .addOnSuccessListener(aVoid -> {
+                                // Ride updated successfully
+                                Toast.makeText(getContext(), "Ride updated successfully", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                // Failed to update ride
+                                Toast.makeText(getContext(), "Failed to update ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                });
+
+                // Set negative button for canceling the update
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    // Dismiss the dialog
+                    dialog.dismiss();
+                });
+
+                // Show the dialog
+                AlertDialog dialog = builder.create();
+                dialog.show();
             });
 
 
             deleteButton.setOnClickListener(v -> {
-                //oList.remove(ride);
+                oList.remove(ride);
+                String key = ride.key;
+                mDatabase.child("rides").child(key).setValue(null);
                 // Remove the button after it's clicked
                 oLayout.removeView(deleteButton);
                 oLayout.removeView(updateButton);
