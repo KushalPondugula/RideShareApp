@@ -1,0 +1,85 @@
+[33mcommit 996a5823016313be73e4abedd8cbec0622990686[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Wed Apr 17 14:38:53 2024 -0400
+
+    added user list to db
+
+[33mcommit 80f8475d7fb9dc7c9b8d0d522b2964b9ac026ffe[m
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Wed Apr 17 14:06:25 2024 -0400
+
+    some authentication working
+
+[33mcommit 2b89e6c14dcb2dc2e1cbaeafc59b881817afd850[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 16:35:43 2024 -0400
+
+    updated home screen
+
+[33mcommit 002d025cd8c4884228959e8e9489f822621b141f[m
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Tue Apr 16 16:29:39 2024 -0400
+
+    04/16 Latest changes + firebase stuff
+
+[33mcommit 72c676ebe031ffc45de2f9099ccb9fa0df6695c1[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 16:25:27 2024 -0400
+
+    updated home screen
+
+[33mcommit 1f57811815a8f8b8bf91d352bd56b5d9a8881789[m
+Merge: c98ef18 17ad589
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Tue Apr 16 13:58:37 2024 -0400
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit c98ef1860fe9353255d5585ba532a8dd7a60ed12[m
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Tue Apr 16 13:58:19 2024 -0400
+
+    HomeScreenFragment layout added
+
+[33mcommit 17ad5890745e7066b0a7de22d83edbebdda41229[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 13:57:45 2024 -0400
+
+    added the user and ride class
+
+[33mcommit 47339593759a322127bda5294be8ab641021d7c9[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 13:06:09 2024 -0400
+
+    added sign up and login frags
+
+[33mcommit 1f6b22f54f2bb8b55911f12335a24f74bf381b72[m
+Merge: db66e5f 18bb859
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Tue Apr 16 12:53:42 2024 -0400
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit db66e5f352e3ffe7320dc0138e7aef72efeda4ff[m
+Author: KushalPondugula <kushalpondugula@gmail.com>
+Date:   Tue Apr 16 12:51:36 2024 -0400
+
+    login fragment included
+
+[33mcommit 18bb85944f4d8865b83b5f543ef7226050dcbb30[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 12:49:56 2024 -0400
+
+    sign up started
+
+[33mcommit 3814b44f045e1f49df03ce6637b0df1d511c74b3[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 12:37:04 2024 -0400
+
+    added splash screen
+
+[33mcommit d4eecc97637833a15de4fc78f0584518ed32ddcc[m
+Author: George-Tharpe <gjt35703@uga.edu>
+Date:   Tue Apr 16 11:14:19 2024 -0400
+
+    initial commit
